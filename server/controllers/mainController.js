@@ -1,0 +1,287 @@
+const Customer = require('../models/Customer');
+const Loan = require('../models/Loan');
+const Transaction = require('../models/Transaction');
+const FAQ = require('../models/FAQ');
+const { generateCallScript, generateSpendBrief, generateFAQAnswer, generateMorningBrief } = require('../services/llmService');
+const { generateEmbedding } = require('../services/embeddingService');
+const { searchFAQ } = require('../services/chromaService');
+
+// Utility to calculate priority and issues (simulate F4 logic)
+function enrichCustomerWithPriority(c, loans) {
+  let overdueDays = 0;
+  let loanAmount = 0;
+  let issues = [];
+
+  loans.forEach(l => {
+    loanAmount += l.outstanding || 0;
+    if (l.days_past_due > overdueDays) overdueDays = l.days_past_due;
+  });
+
+  const kycIssue = c.posting_restrict === 'KYC';
+  let priority = 'LOW';
+  
+  if (overdueDays > 45 || kycIssue) priority = 'HIGH';
+  else if (overdueDays > 15) priority = 'MEDIUM';
+
+  if (overdueDays > 0) issues.push(`Loan overdue: ${overdueDays} days`);
+  if (kycIssue) issues.push("KYC verification required");
+  if (issues.length === 0) issues.push("Account in good standing");
+
+  return {
+    ...c,
+    loanAmount,
+    overdueDays,
+    priority,
+    issues,
+    kycIssue,
+    suspicious: false // Mocking false for now, could be checked via txns
+  };
+}
+
+// F1 & General Customer Info
+const getCustomerAndLoan = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const customer = await Customer.findOne({ customer_id: customerId }).lean();
+    if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
+    
+    const loans = await Loan.find({ customer_id: customerId }).lean();
+    const enriched = enrichCustomerWithPriority(customer, loans);
+    
+    res.json({ success: true, customer: enriched, loans });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const generateScript = async (req, res) => {
+  try {
+    const { customerId, loanId } = req.body;
+    if (!customerId || !loanId) return res.status(400).json({ success: false, message: 'customerId and loanId are required' });
+
+    const customer = await Customer.findOne({ customer_id: customerId }).lean();
+    const loan = await Loan.findOne({ loan_id: loanId }).lean();
+    if (!customer || !loan) return res.status(404).json({ success: false, message: 'Customer or Loan not found' });
+
+    const enriched = enrichCustomerWithPriority(customer, [loan]);
+
+    const context = {
+      customer: {
+        account_title: customer.account_title,
+        category: customer.category,
+        product: customer.product
+      },
+      loan: {
+        product: loan.product,
+        sanctioned_amount: loan.sanctioned_amount,
+        outstanding: loan.outstanding,
+        days_past_due: loan.days_past_due,
+        status: loan.status
+      }
+    };
+
+    const scriptData = await generateCallScript(context);
+    res.json({ success: true, data: scriptData });
+  } catch (error) {
+    res.json({ success: false, error: "Unable to generate a valid collection response." });
+  }
+};
+
+// F2: Spend Analytics
+const getTransactions = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const txns = await Transaction.find({ customer_id: customerId }).sort({ txn_date: -1 }).lean();
+    
+    // Aggregate by category
+    const catTotals = { Food: 0, Bills: 0, Shopping: 0, Travel: 0, Others: 0 };
+    let totalSpend = 0;
+    
+    txns.forEach(t => {
+      if (t.txn_type === 'DEBIT' && Object.keys(catTotals).includes(t.category)) {
+        const amt = Math.abs(t.amount);
+        catTotals[t.category] += amt;
+        totalSpend += amt;
+      } else if (t.txn_type === 'DEBIT') {
+        const amt = Math.abs(t.amount);
+        catTotals['Others'] += amt;
+        totalSpend += amt;
+      }
+    });
+
+    // Mocking historical monthly data for the chart since CSV only has 3 months of data
+    const monthly = [0.78, 0.85, 0.72, 0.95, 1.0, 0.88].map(f => Math.round(totalSpend * f * (0.85 + Math.random() * 0.3)));
+
+    res.json({ success: true, txns, catTotals, totalSpend, monthly });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getSpendBrief = async (req, res) => {
+  try {
+    const { customerId } = req.body;
+    if (!customerId) return res.status(400).json({ success: false, message: 'Missing customerId' });
+
+    const txns = await Transaction.find({ customer_id: customerId, txn_type: 'DEBIT' }).lean();
+    
+    if (!txns.length) {
+      return res.json({ success: true, data: { greeting: "Hello.", spending_analysis: "You have no recent debit transactions.", anomaly_warning: "" } });
+    }
+
+    let totalSpend = 0;
+    const catTotals = {};
+    const amounts = [];
+    
+    txns.forEach(t => {
+      const amt = Math.abs(t.amount);
+      totalSpend += amt;
+      amounts.push(amt);
+      const cat = t.category || 'Others';
+      catTotals[cat] = (catTotals[cat] || 0) + amt;
+    });
+
+    const transactionCount = txns.length;
+    const averageSpend = totalSpend / transactionCount;
+
+    const variance = amounts.reduce((acc, val) => acc + Math.pow(val - averageSpend, 2), 0) / transactionCount;
+    const stdDev = Math.sqrt(variance);
+    const anomalyThreshold = averageSpend + (2 * stdDev);
+
+    const anomalies = [];
+    txns.forEach(t => {
+      const amt = Math.abs(t.amount);
+      if (t.is_suspicious === true || t.is_suspicious === 'Y') {
+        anomalies.push(`Suspicious flag: ₹${amt} to ${t.counterparty} (${t.narrative})`);
+      } else if (transactionCount > 5 && amt > anomalyThreshold && amt > 5000) {
+        anomalies.push(`Unusually high spend: ₹${amt} to ${t.counterparty} (${t.narrative})`);
+      }
+    });
+
+    const context = {
+      totalSpend: Math.round(totalSpend),
+      transactionCount,
+      averageSpend: Math.round(averageSpend),
+      categoryBreakdown: catTotals,
+      anomalies
+    };
+
+    const brief = await generateSpendBrief(context);
+    res.json({ success: true, data: brief });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// F3: FAQ Bot (ChromaDB RAG)
+const askFAQ = async (req, res) => {
+  try {
+    const { question } = req.body;
+    if (!question) return res.status(400).json({ success: false, message: 'Question required' });
+
+    // 1. Generate query embedding
+    let queryEmbedding;
+    try {
+      queryEmbedding = await generateEmbedding(question);
+    } catch (e) {
+      console.error("Embedding generation failed:", e);
+      return res.status(503).json({ success: false, error: 'Embedding service unavailable.' });
+    }
+
+    // 2. Vector Search in ChromaDB
+    let retrievedDocs = [];
+    try {
+      retrievedDocs = await searchFAQ(queryEmbedding, 3);
+    } catch (err) {
+      return res.status(503).json({ success: false, error: 'FAQ vector search is currently unavailable.' });
+    }
+
+    // Filter by relevance if needed (distance threshold)
+    // ChromaDB cosine distance usually ranges from 0 to 2 (0 being perfect match). Let's use 0.5 as threshold
+    const relevantDocs = retrievedDocs.filter(d => d.distance < 0.6);
+
+    // 3. Handle low-quality or empty retrieval
+    if (relevantDocs.length === 0) {
+      return res.json({ 
+        success: true, 
+        data: { 
+          answer: "I couldn't find this information in the available product FAQs.", 
+          sources: [] 
+        } 
+      });
+    }
+
+    // 4. Build RAG Context
+    const sources = relevantDocs.map(d => ({ title: d.metadata.title }));
+    const context = relevantDocs.map(d => `${d.metadata.title}: ${d.content}`).join("\n\n");
+
+    // 5. Pass to LLM RAG
+    const answerData = await generateFAQAnswer(question, context);
+    
+    // Return structured response to React
+    res.json({ 
+      success: true, 
+      data: { 
+        answer: answerData.answer, 
+        sources: answerData.sources 
+      } 
+    });
+  } catch (error) {
+    if (error.message === "Unable to generate a valid FAQ response.") {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+    console.error("FAQ Error:", error);
+    res.status(500).json({ success: false, error: 'An unexpected error occurred.' });
+  }
+};
+
+// F4: RM Dashboard
+const getRMDashboard = async (req, res) => {
+  try {
+    const customers = await Customer.find({}).lean();
+    const loans = await Loan.find({}).lean();
+    const txns = await Transaction.find({ is_suspicious: true }).lean(); // Get all suspicious txns
+    
+    // Group suspicious by customer
+    const suspiciousCustomers = new Set(txns.map(t => t.customer_id));
+
+    const enriched = customers.map(c => {
+      const cLoans = loans.filter(l => l.customer_id === c.customer_id);
+      const en = enrichCustomerWithPriority(c, cLoans);
+      if (suspiciousCustomers.has(c.customer_id)) {
+        en.suspicious = true;
+        if (en.priority !== 'HIGH') en.priority = 'MEDIUM'; // Bump priority if suspicious
+      }
+      return en;
+    });
+
+    const order = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+    const sorted = enriched.sort((a, b) => order[a.priority] - order[b.priority] || b.overdueDays - a.overdueDays);
+    
+    const top5 = sorted.slice(0, 5);
+    
+    res.json({ success: true, allCustomers: sorted, top5 });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getMorningBrief = async (req, res) => {
+  try {
+    const { top5 } = req.body;
+    const brief = await generateMorningBrief(top5);
+    res.json({ success: true, data: brief });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  getCustomerAndLoan,
+  generateScript,
+  getTransactions,
+  getSpendBrief,
+  askFAQ,
+  getRMDashboard,
+  getMorningBrief
+};
