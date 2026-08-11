@@ -118,6 +118,37 @@ const getTransactions = async (req, res) => {
   }
 };
 
+const addTransaction = async (req, res) => {
+  try {
+    const { customerId, type, amount, category, description } = req.body;
+    
+    const customer = await Customer.findOne({ customer_id: customerId });
+    if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
+
+    const txnAmount = type === 'DEBIT' ? -Number(amount) : Number(amount);
+    customer.working_balance += txnAmount;
+    await customer.save();
+
+    const txn = new Transaction({
+      txn_id: 'TXN' + Math.floor(Math.random() * 10000000),
+      account_id: customer.account_id,
+      customer_id: customerId,
+      txn_date: new Date(),
+      value_date: new Date(),
+      amount: txnAmount,
+      txn_type: type,
+      narrative: description,
+      category: category,
+      channel: 'WEB'
+    });
+    await txn.save();
+
+    res.json({ success: true, transaction: txn });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+};
+
 const getSpendBrief = async (req, res) => {
   try {
     const { customerId } = req.body;
@@ -280,6 +311,7 @@ module.exports = {
   getCustomerAndLoan,
   generateScript,
   getTransactions,
+  addTransaction,
   getSpendBrief,
   askFAQ,
   getRMDashboard,

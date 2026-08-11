@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { 
   getCustomerAndLoan, generateScript,
-  getTransactions, getSpendBrief,
+  getTransactions, addTransaction, getSpendBrief,
   askFAQ,
   getRMDashboard, getMorningBrief
 } = require('../controllers/mainController');
@@ -16,6 +16,7 @@ router.post('/collections/generate', generateScript);
 
 // F2
 router.get('/transactions/:customerId', getTransactions);
+router.post('/transactions', addTransaction);
 router.post('/analytics/brief', getSpendBrief);
 
 // F3
