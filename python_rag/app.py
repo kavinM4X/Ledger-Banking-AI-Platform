@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import chromadb
-import chromadb.utils.embedding_functions as embedding_functions
+import requests
 import google.generativeai as genai
 
 load_dotenv()
@@ -21,13 +21,27 @@ CORS(app)
 
 # Initialize ChromaDB
 client = chromadb.PersistentClient(path="./chroma_data")
-google_ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
-    api_key=api_key,
-    model_name="models/gemini-embedding-2"
-)
+
+class CustomGeminiEmbeddingFunction(chromadb.EmbeddingFunction):
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        
+    def __call__(self, input: list) -> list:
+        embeddings = []
+        for text in input:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key={self.api_key}"
+            payload = {
+                "model": "models/gemini-embedding-2",
+                "content": {"parts": [{"text": text}]}
+            }
+            res = requests.post(url, json=payload).json()
+            embeddings.append(res['embedding']['values'])
+        return embeddings
+
+custom_ef = CustomGeminiEmbeddingFunction(api_key=api_key)
 
 def get_collection():
-    return client.get_collection(name="banking_faq", embedding_function=google_ef)
+    return client.get_collection(name="banking_faq", embedding_function=custom_ef)
 
 @app.route('/api/ai/faq', methods=['POST'])
 def ask_faq():

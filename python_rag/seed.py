@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import chromadb
-import chromadb.utils.embedding_functions as embedding_functions
+import requests
 
 load_dotenv()
 api_key = os.getenv("LLM_API_KEY")
@@ -23,6 +23,22 @@ FAQS = [
    "body":"Account statements can be downloaded as PDF or CSV from the app under Accounts > Statements, for any date range up to the last 3 years, and are also emailed monthly by default."}
 ]
 
+class CustomGeminiEmbeddingFunction(chromadb.EmbeddingFunction):
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        
+    def __call__(self, input: list) -> list:
+        embeddings = []
+        for text in input:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key={self.api_key}"
+            payload = {
+                "model": "models/gemini-embedding-2",
+                "content": {"parts": [{"text": text}]}
+            }
+            res = requests.post(url, json=payload).json()
+            embeddings.append(res['embedding']['values'])
+        return embeddings
+
 def seed():
     if not api_key:
         print("Error: LLM_API_KEY not found in .env")
@@ -31,14 +47,11 @@ def seed():
     print("Initializing ChromaDB...")
     client = chromadb.PersistentClient(path="./chroma_data")
     
-    google_ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
-        api_key=api_key,
-        model_name="models/gemini-embedding-2"
-    )
+    custom_ef = CustomGeminiEmbeddingFunction(api_key=api_key)
     
     collection = client.get_or_create_collection(
         name="banking_faq",
-        embedding_function=google_ef
+        embedding_function=custom_ef
     )
     
     ids = []
