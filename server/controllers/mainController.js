@@ -312,8 +312,19 @@ const getRMDashboard = async (req, res) => {
       return en;
     });
 
+    const uniqueEnrichedMap = new Map();
+    enriched.forEach(c => {
+      if (!uniqueEnrichedMap.has(c.customer_id)) {
+        uniqueEnrichedMap.set(c.customer_id, c);
+      } else {
+        // If we want to prioritize the most severe account representation, we could compare priorities here.
+        // For now, keeping the first occurrence is fine since loans/priority are aggregated by customer_id anyway.
+      }
+    });
+    const uniqueEnriched = Array.from(uniqueEnrichedMap.values());
+
     const order = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-    const sorted = enriched.sort((a, b) => order[a.priority] - order[b.priority] || b.overdueDays - a.overdueDays);
+    const sorted = uniqueEnriched.sort((a, b) => order[a.priority] - order[b.priority] || b.overdueDays - a.overdueDays);
     
     const top5 = sorted.slice(0, 5);
     

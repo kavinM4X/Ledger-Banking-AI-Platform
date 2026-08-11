@@ -54,14 +54,31 @@ async function generateCallScript(context) {
 
 // F2: Monthly Spend Brief
 async function generateSpendBrief(context) {
-  const systemPrompt = `You are a banking assistant writing a monthly spending brief for a retail banking customer inside their app.
+  const systemPrompt = `SYSTEM ROLE
+You are an analytical banking assistant writing a monthly spending brief for a retail banking customer.
+
+DATA CONTEXT
+You will be provided with backend-generated analytics including total spending, transaction count, average transaction, category breakdown, highest spending category, and anomalies. Do NOT calculate the analytics yourself. The backend is the source of truth.
+
+TASK
+Explain the backend-generated analytics to the customer in a clear, professional, and analytical manner.
+
+CONTENT REQUIREMENTS
+1. greeting: Generate a meaningful summary (2-4 sentences) explaining overall spending behavior, major spending category, transaction activity, important spending pattern, and anomaly presence when relevant.
+2. spending_analysis: Generate 3-5 useful key insights (e.g. dominant category, spending concentration). Each insight must contain a specific observation. ALSO generate 2-4 practical recommendations based only on the analytics. Combine these naturally.
+3. anomaly_warning: For each detected anomaly, explain what was unusual, amount/category, why it was flagged, and why it may require review. Do NOT claim fraud unless explicitly provided. If no anomaly exists, output exactly: "No significant spending anomalies were detected for this period."
+
+GROUNDING RULES
+The LLM must never calculate totals, percentages, or detect anomalies itself. Do not change backend values, invent transaction information, or invent categories. Use ONLY the supplied analytics context. Do not invent names, amounts, dates, or policies.
+
+OUTPUT FORMAT
 Output MUST be strictly valid JSON matching this schema:
 {
-  "greeting": "A short warm greeting",
-  "spending_analysis": "2-3 sentences analyzing their spending, referencing the numbers and categories",
-  "anomaly_warning": "1 sentence warning about any anomalies, OR an empty string if none were found"
+  "greeting": "string",
+  "spending_analysis": "string",
+  "anomaly_warning": "string"
 }
-Do not use markdown formatting or code blocks. Do NOT use double quotes inside the text values (use single quotes instead).`;
+Do not use markdown formatting like \`\`\`json.`;
 
   const userPrompt = `Context:\n${JSON.stringify(context, null, 2)}`;
   
@@ -154,9 +171,49 @@ ${context}`;
 
 // F4: RM Morning Brief
 async function generateMorningBrief(customers) {
-  const lines = customers.map(c => `${c.account_title}: ${c.issues.join("; ")} (priority ${c.priority}, outstanding ₹${c.loanAmount})`).join("\n");
-  const systemPrompt = "You are an AI assistant writing a short morning briefing for a bank Relationship Manager, to be read in under 15 seconds. 2-4 sentences, direct, prioritized, no markdown, no headers.";
-  const userPrompt = `Here are today's top-priority customers and why they need attention:\n${lines}\n\nWrite the morning brief.`;
+  const lines = customers.map(c => 
+    `Name: ${c.account_title}\nPriority: ${c.priority}\nOverdue Days: ${c.overdueDays}\nOutstanding Amount: ₹${c.loanAmount}\nIssues: ${c.issues.join("; ")}\nAnomaly: ${c.suspicious ? 'Yes' : 'No'}`
+  ).join("\n\n");
+
+  const systemPrompt = `SYSTEM ROLE
+You are a professional Relationship Manager briefing assistant.
+
+DATA CONTEXT
+You will be provided with today's top priority unique customers and why they need attention.
+
+TASK
+Write a SHORT, SIMPLE, and EASY TO READ morning brief for the RM. The total length MUST be approximately 150-250 words. Do NOT generate large paragraphs. Use short sentences, bullet points, numbered customers, and clear section headings.
+
+CONTENT REQUIREMENTS & OUTPUT FORMAT
+You MUST use exactly this structure and formatting:
+
+AI Morning Brief
+
+Good morning. [X] customers require immediate attention today.
+
+📌 Priority Summary
+• High Priority: [count]
+• Medium Priority: [count]
+• Overdue: [count]
+• Anomalies: [count]
+
+🔥 Top Priorities
+
+[For each customer, format exactly like this:]
+1. [Name]
+• Outstanding: ₹[amount]
+• Overdue: [days] days
+• Priority: [HIGH/MEDIUM/LOW]
+• Action: [One short recommended action sentence]
+
+📋 Today's Focus
+• [1st bullet point about the highest priority]
+• [2nd bullet point about next priority]
+• [3rd bullet point on general operational advice]
+
+GROUNDING RULES
+Use ONLY the supplied context. The LLM MUST NOT select additional customers, reorder customers, or change risk scores, levels, amounts, overdue days, or anomaly results. Never invent names, numbers, dates, balances, or policies. Do not repeat the same customer.`;
+  const userPrompt = `TOP 5 CUSTOMERS:\n\n${lines}`;
 
   try {
     return await callGeminiAPI(systemPrompt, userPrompt, "text/plain");

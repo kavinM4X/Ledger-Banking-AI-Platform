@@ -101,7 +101,7 @@ const RMDashboard = () => {
         </div>
         
         {briefText ? (
-          <p>{briefText}</p>
+          <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '14px' }}>{briefText}</div>
         ) : briefLoading ? (
           <>
             <div className="skel" style={{ width: '96%' }}></div>
