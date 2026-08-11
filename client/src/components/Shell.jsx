@@ -51,8 +51,8 @@ const Shell = ({ role, children }) => {
             ))}
           </div>
           <div className="nav-foot">
-            <div className="navitem" onClick={handleLogout}>
-              <span className="ic">🚪</span>Logout
+            <div className="navitem" onClick={handleLogout} style={{ fontWeight: '600', color: '#fff' }}>
+              Logout
             </div>
           </div>
         </div>
