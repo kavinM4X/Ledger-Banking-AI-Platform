@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const CATS = ["Food", "Bills", "Shopping", "Travel", "Others"];
+const CATS = ["Food", "Bills", "Shopping", "Travel", "Others", "Salary"];
 const CAT_COLORS = { Food: "#2F4B8C", Bills: "#B9852F", Shopping: "#3E7A56", Travel: "#B23B3B", Others: "#8891A6", Salary: "#3E7A56" };
 
 const SpendingAnalytics = () => {
@@ -98,10 +98,10 @@ const SpendingAnalytics = () => {
 
       <div className="aibox" style={{ marginBottom: '16px' }}>
         <div className="tag">
-          🤖 AI Monthly Spend Brief 
+          🤖 AI Monthly Spend Brief
           {briefLoading && <span className="typing"><span></span><span></span><span></span></span>}
         </div>
-        
+
         {briefText ? (
           briefText.error ? (
             <p style={{ color: 'var(--red)' }}>⚠️ {briefText.error}</p>

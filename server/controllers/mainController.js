@@ -93,26 +93,52 @@ const getTransactions = async (req, res) => {
     const { customerId } = req.params;
     const txns = await Transaction.find({ customer_id: customerId }).sort({ txn_date: -1 }).lean();
     
-    // Aggregate by category
-    const catTotals = { Food: 0, Bills: 0, Shopping: 0, Travel: 0, Others: 0 };
+    // Aggregate by category and month (including Credits)
+    const catTotals = { Food: 0, Bills: 0, Shopping: 0, Travel: 0, Others: 0, Salary: 0 };
     let totalSpend = 0;
     
+    // Determine the most recent transaction date to anchor the 6-month chart
+    let maxDate = 0;
+    txns.forEach(t => { 
+      if (t.txn_date && new Date(t.txn_date).getTime() > maxDate) {
+        maxDate = new Date(t.txn_date).getTime(); 
+      }
+    });
+    if (maxDate === 0) maxDate = Date.now();
+    
+    const maxD = new Date(maxDate);
+    const m6 = [];
+    for (let i=5; i>=0; i--) {
+      const d = new Date(maxD.getFullYear(), maxD.getMonth() - i, 1);
+      m6.push({ year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleString('en-US', {month: 'short'}), amount: 0 });
+    }
+    
     txns.forEach(t => {
-      if (t.txn_type === 'DEBIT' && Object.keys(catTotals).includes(t.category)) {
-        const amt = Math.abs(t.amount);
-        catTotals[t.category] += amt;
-        totalSpend += amt;
-      } else if (t.txn_type === 'DEBIT') {
-        const amt = Math.abs(t.amount);
+      const amt = Math.abs(t.amount);
+      
+      let cat = t.category;
+      if (!cat) cat = t.txn_type === 'CREDIT' ? 'Salary' : 'Others';
+      
+      // Category
+      if (Object.keys(catTotals).includes(cat)) {
+        catTotals[cat] += amt;
+      } else {
         catTotals['Others'] += amt;
-        totalSpend += amt;
+      }
+      totalSpend += amt;
+      
+      // Month
+      if (t.txn_date) {
+        const d = new Date(t.txn_date);
+        const match = m6.find(m => m.year === d.getFullYear() && m.month === d.getMonth());
+        if (match) match.amount += amt;
       }
     });
 
-    // Mocking historical monthly data for the chart since CSV only has 3 months of data
-    const monthly = [0.78, 0.85, 0.72, 0.95, 1.0, 0.88].map(f => Math.round(totalSpend * f * (0.85 + Math.random() * 0.3)));
+    const monthly = m6.map(m => m.amount);
+    const monthLabels = m6.map(m => m.label);
 
-    res.json({ success: true, txns, catTotals, totalSpend, monthly });
+    res.json({ success: true, txns, catTotals, totalSpend, monthly, monthLabels });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

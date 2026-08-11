@@ -1,8 +1,9 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 
 const Shell = ({ role, children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const today = new Date().toLocaleDateString("en-IN", { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
 
   const navItems = role === 'customer' 
@@ -59,6 +60,36 @@ const Shell = ({ role, children }) => {
           {children}
         </div>
       </div>
+      
+      {/* Floating AI Assistant Button (Customer Only) */}
+      {role === 'customer' && location.pathname !== '/customer/faq' && (
+        <div 
+          onClick={() => navigate('/customer/faq')}
+          style={{
+            position: 'fixed',
+            bottom: '30px',
+            right: '30px',
+            background: 'var(--accent)',
+            color: '#fff',
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '28px',
+            boxShadow: '0 8px 24px rgba(47,75,140,0.35)',
+            cursor: 'pointer',
+            zIndex: 900,
+            transition: 'transform 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title="Ask AI Assistant"
+        >
+          🤖
+        </div>
+      )}
     </>
   );
 };
