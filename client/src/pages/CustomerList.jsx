@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 const CustomerList = () => {
   const [data, setData] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,6 +25,9 @@ const CustomerList = () => {
   };
 
   if (!data) return <div className="pagehead"><h1>Loading...</h1></div>;
+
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <>
@@ -47,7 +52,7 @@ const CustomerList = () => {
             <tr><th>Customer</th><th>Status</th><th>Loan</th><th>Priority</th></tr>
           </thead>
           <tbody>
-            {data.map(c => (
+            {paginatedData.map(c => (
               <tr key={c._id} className="rowlink" onClick={() => navigate(`/rm/customer/${c.customer_id}`)}>
                 <td>
                   <b>{c.account_title.split(' - ')[0]}</b>
@@ -62,6 +67,28 @@ const CustomerList = () => {
             ))}
           </tbody>
         </table>
+        
+        {data.length > itemsPerPage && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', borderTop: '1px solid var(--border)' }}>
+            <button 
+              className="btn ghost sm" 
+              disabled={currentPage === 1} 
+              onClick={() => setCurrentPage(prev => prev - 1)}
+            >
+              Previous
+            </button>
+            <span style={{ fontSize: '13px', display: 'flex', alignItems: 'center', color: 'var(--ink-soft)' }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button 
+              className="btn ghost sm" 
+              disabled={currentPage === totalPages} 
+              onClick={() => setCurrentPage(prev => prev + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

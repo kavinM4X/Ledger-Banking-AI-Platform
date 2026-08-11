@@ -118,30 +118,7 @@ const RMDashboard = () => {
         </div>
       </div>
       
-      <div className="card" style={{ marginBottom: '18px' }}>
-        <h3>🔥 Top 5 Customers Requiring Attention</h3>
-        <table>
-          <thead>
-            <tr><th>Customer</th><th>Issue</th><th>Priority</th><th></th></tr>
-          </thead>
-          <tbody>
-            {top5.map(c => (
-              <tr key={c._id} className="rowlink" onClick={() => navigate('/rm/customers')}>
-                <td><b>{c.account_title.split(' - ')[0]}</b></td>
-                <td>{c.issues[0]}</td>
-                <td><span className={`stamp ${stampClass(c.priority)}`}>{c.priority}</span></td>
-                <td>
-                  <button className="btn ghost sm" onClick={(e) => { e.stopPropagation(); navigate('/rm/customers'); }}>
-                    View
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      
-      <div className="aibox">
+      <div className="aibox" style={{ marginBottom: '18px' }}>
         <div className="tag">
           🤖 AI Morning Brief 
           {briefLoading && <span className="typing"><span></span><span></span><span></span></span>}
@@ -167,7 +144,7 @@ const RMDashboard = () => {
         )}
       </div>
 
-      <div className="card" style={{ marginTop: '18px' }}>
+      <div className="card" style={{ marginBottom: '18px' }}>
         <h3>Customer Escalation Tickets</h3>
         {tickets.filter(t => t.status !== 'RESOLVED').length === 0 ? (
           <p style={{ color: 'var(--ink-soft)' }}>No pending tickets.</p>
@@ -200,6 +177,29 @@ const RMDashboard = () => {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="card">
+        <h3>🔥 Top 5 Customers Requiring Attention</h3>
+        <table>
+          <thead>
+            <tr><th>Customer</th><th>Issue</th><th>Priority</th><th></th></tr>
+          </thead>
+          <tbody>
+            {top5.map(c => (
+              <tr key={c._id} className="rowlink" onClick={() => navigate('/rm/customers')}>
+                <td><b>{c.account_title.split(' - ')[0]}</b></td>
+                <td>{c.issues[0]}</td>
+                <td><span className={`stamp ${stampClass(c.priority)}`}>{c.priority}</span></td>
+                <td>
+                  <button className="btn ghost sm" onClick={(e) => { e.stopPropagation(); navigate('/rm/customers'); }}>
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </>
   );
