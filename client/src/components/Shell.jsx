@@ -33,7 +33,7 @@ const Shell = ({ role, children }) => {
         <span className="dim">{role === 'customer' ? 'CUSTOMER PORTAL' : 'RM PORTAL'}</span>
       </div>
       <div className="shell">
-        <div className="sidebar">
+        <div className="navbar">
           <div className="brand">
             <div className="mark">Ledger</div>
             <div className="sub">Banking AI Platform</div>
@@ -50,7 +50,7 @@ const Shell = ({ role, children }) => {
               </NavLink>
             ))}
           </div>
-          <div className="sidebar-foot">
+          <div className="nav-foot">
             <div className="navitem" onClick={handleLogout}>
               <span className="ic">🚪</span>Logout
             </div>

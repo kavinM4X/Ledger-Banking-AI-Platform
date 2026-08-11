@@ -1,25 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 :root{
-  --bg:#EAEDF1;
-  --panel:#FFFFFF;
-  --ink:#16233D;
-  --ink-soft:#5B6478;
-  --accent:#2F4B8C;
-  --accent-deep:#1C3160;
-  --accent-soft:#E1E7F5;
-  --gold:#B9852F;
-  --gold-soft:#F3E7D1;
-  --red:#B23B3B;
-  --red-soft:#F6E3E1;
-  --amber:#C98A2C;
-  --amber-soft:#F7EAD4;
-  --green:#3E7A56;
-  --green-soft:#E3EFE7;
-  --line:#D7DCE3;
-  --mono:'IBM Plex Mono',monospace;
-  --display:'Fraunces',serif;
-  --body:'Inter',sans-serif;
+  /* Gold Reserve Design System */
+  --bg: #F8F4EC;
+  --panel: #FFFDF8;
+  --ink: #1F1B14;
+  --ink-soft: #7A6F5C;
+  --accent: #B8863B;
+  --accent-deep: #17140F;
+  --accent-soft: #F1E4C9;
+  --gold: #B8863B;
+  --gold-soft: #F1E4C9;
+  --red: #A8432E;
+  --red-soft: #F4E2DE;
+  --amber: #C98A2C;
+  --amber-soft: #F7EAD4;
+  --green: #4B7F52;
+  --green-soft: #E3EDE4;
+  --line: #E9DFC9;
+  
+  --mono: 'IBM Plex Mono', monospace;
+  --display: 'Fraunces', serif;
+  --body: 'Inter', sans-serif;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--body);}
@@ -43,26 +45,26 @@ button{font-family:var(--body);cursor:pointer;}
 .ticker span.dim{opacity:.55;}
 
 /* ---------- Shell ---------- */
-.shell{display:flex;min-height:calc(100vh - 27px);}
-.sidebar{
-  width:230px;flex-shrink:0;background:var(--accent-deep);color:#fff;
-  display:flex;flex-direction:column;padding:26px 0 20px;
+.shell{display:flex;flex-direction:column;min-height:calc(100vh - 27px);}
+.navbar{
+  background:var(--accent-deep);color:#fff;
+  display:flex;align-items:center;padding:0 36px;height:70px;
 }
-.brand{padding:0 22px 22px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:14px;}
-.brand .mark{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:.01em;}
-.brand .sub{font-family:var(--mono);font-size:10px;letter-spacing:.14em;opacity:.55;margin-top:3px;text-transform:uppercase;}
-.navgroup{padding:0 12px;flex:1;}
+.brand{display:flex;align-items:baseline;gap:14px;margin-right:40px;}
+.brand .mark{font-family:var(--display);font-size:24px;font-weight:600;letter-spacing:.01em;margin:0;}
+.brand .sub{font-family:var(--mono);font-size:10px;letter-spacing:.14em;opacity:.7;text-transform:uppercase;margin:0;border-left:1px solid rgba(255,255,255,.2);padding-left:14px;}
+.navgroup{display:flex;align-items:center;gap:6px;flex:1;}
 .navitem{
-  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;
-  font-size:13.5px;font-weight:500;color:#C7D1EA;margin-bottom:2px;transition:background .15s;
+  display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:24px;
+  font-size:13.5px;font-weight:500;color:#C7D1EA;transition:background .15s;
   cursor:pointer;
 }
 .navitem:hover{background:rgba(255,255,255,.06);color:#fff;}
 .navitem.active{background:#fff;color:var(--accent-deep);}
-.navitem .ic{font-size:15px;width:18px;text-align:center;}
-.sidebar-foot{padding:14px 12px 0;border-top:1px solid rgba(255,255,255,.12);margin-top:10px;}
+.navitem .ic{font-size:15px;}
+.nav-foot{margin-left:auto;}
 
-.main{flex:1;padding:30px 36px 60px;max-width:1180px;}
+.main{flex:1;padding:34px 36px 60px;max-width:1180px;margin:0 auto;width:100%;}
 .pagehead{margin-bottom:22px;}
 .pagehead h1{font-family:var(--display);font-size:26px;font-weight:600;margin:0 0 4px;}
 .pagehead p{margin:0;color:var(--ink-soft);font-size:13.5px;}
