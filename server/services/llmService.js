@@ -37,13 +37,30 @@ async function generateCallScript(context) {
   
   try {
     const textResponse = await callGeminiAPI(collectionSystemPrompt, userPrompt, "application/json");
-    const parsed = JSON.parse(textResponse);
+    
+    let parsed;
+    try {
+      let cleanText = textResponse.replace(/^```json\n?/i, '').replace(/```$/i, '').trim();
+      const match = cleanText.match(/\{[\s\S]*\}/);
+      if (match) cleanText = match[0];
+      parsed = JSON.parse(cleanText);
+    } catch (parseErr) {
+      console.error("JSON Parse Error. Raw response was:", textResponse);
+      throw parseErr;
+    }
     
     // Strict validation
     if (!parsed.priority || !['HIGH', 'MEDIUM', 'LOW'].includes(parsed.priority)) throw new Error("Invalid priority");
     if (typeof parsed.reason !== 'string') throw new Error("Invalid reason");
-    if (typeof parsed.call_script !== 'string') throw new Error("Invalid call_script");
     if (typeof parsed.recommended_action !== 'string') throw new Error("Invalid recommended_action");
+    
+    // Nested call_script validation
+    if (!parsed.call_script || typeof parsed.call_script !== 'object') throw new Error("Invalid call_script object");
+    if (typeof parsed.call_script.greeting !== 'string') throw new Error("Invalid greeting");
+    if (typeof parsed.call_script.reason_for_call !== 'string') throw new Error("Invalid reason_for_call");
+    if (typeof parsed.call_script.current_status !== 'string') throw new Error("Invalid current_status");
+    if (typeof parsed.call_script.request !== 'string') throw new Error("Invalid request");
+    if (typeof parsed.call_script.next_step !== 'string') throw new Error("Invalid next_step");
     
     return parsed;
   } catch (error) {

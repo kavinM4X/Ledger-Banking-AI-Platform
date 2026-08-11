@@ -51,9 +51,13 @@ const CallScript = () => {
     setScriptLoading(false);
   };
 
+  const formattedScript = scriptData && scriptData.call_script 
+    ? `Greeting:\n${scriptData.call_script.greeting}\n\nReason for Call:\n${scriptData.call_script.reason_for_call}\n\nCurrent Status:\n${scriptData.call_script.current_status}\n\nRequest:\n${scriptData.call_script.request}\n\nNext Step:\n${scriptData.call_script.next_step}` 
+    : '';
+
   const copyScript = () => {
-    if (scriptData?.call_script) {
-      navigator.clipboard.writeText(scriptData.call_script);
+    if (formattedScript) {
+      navigator.clipboard.writeText(formattedScript);
     }
   };
 
@@ -96,7 +100,7 @@ const CallScript = () => {
       <div className="card" style={{ marginBottom: '16px' }}>
         <h3>🤖 Generated Call Script</h3>
         {scriptData ? (
-          <textarea className="scriptbox" readOnly value={scriptData.call_script} />
+          <textarea className="scriptbox" readOnly value={formattedScript} style={{ height: '300px' }} />
         ) : (
           !apiError && (
             <>
