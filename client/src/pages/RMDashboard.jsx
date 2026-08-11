@@ -7,15 +7,56 @@ const RMDashboard = () => {
   const [briefText, setBriefText] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const [tickets, setTickets] = useState([]);
+  const [activeTicket, setActiveTicket] = useState(null);
+  const [rmResponse, setRmResponse] = useState('');
+
+  const loadDashboard = () => {
     fetch(`http://localhost:5000/api/dashboard/rm`)
       .then(res => res.json())
       .then(resData => {
-        if (resData.success) {
-          setData(resData);
-        }
+        if (resData.success) setData(resData);
       });
+  };
+
+  const loadTickets = () => {
+    fetch(`http://localhost:5000/api/tickets`)
+      .then(res => res.json())
+      .then(resData => {
+        if (resData.success) setTickets(resData.tickets);
+      });
+  };
+
+  useEffect(() => {
+    loadDashboard();
+    loadTickets();
   }, []);
+
+  const handleStartReview = async (ticketId) => {
+    try {
+      await fetch(`http://localhost:5000/api/tickets/${ticketId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'IN_REVIEW' })
+      });
+      loadTickets();
+      setActiveTicket(ticketId);
+    } catch(e) {}
+  };
+
+  const handleResolveTicket = async (ticketId) => {
+    if (!rmResponse) return;
+    try {
+      await fetch(`http://localhost:5000/api/tickets/${ticketId}/resolve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rmResponse })
+      });
+      setRmResponse('');
+      setActiveTicket(null);
+      loadTickets();
+    } catch(e) {}
+  };
 
   const generateBrief = async () => {
     if (!data || !data.top5) return;
@@ -123,6 +164,41 @@ const RMDashboard = () => {
               Generate Morning Brief
             </button>
           </>
+        )}
+      </div>
+
+      <div className="card" style={{ marginTop: '18px' }}>
+        <h3>Customer Escalation Tickets</h3>
+        {tickets.filter(t => t.status !== 'RESOLVED').length === 0 ? (
+          <p style={{ color: 'var(--ink-soft)' }}>No pending tickets.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            {tickets.filter(t => t.status !== 'RESOLVED').map(t => (
+              <div key={t.ticketId} style={{ border: '1px solid var(--border)', padding: '15px', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <strong>{t.ticketId} (Customer: {t.customerId})</strong>
+                  <span className={`stamp ${t.status === 'IN_REVIEW' ? 'medium' : 'high'}`}>{t.status}</span>
+                </div>
+                <p style={{ margin: '0 0 10px 0' }}><strong>Question:</strong> {t.question}</p>
+                <p style={{ margin: '0 0 15px 0', fontSize: '13px', color: 'var(--ink-soft)' }}><strong>Reason:</strong> {t.reason}</p>
+                
+                {activeTicket !== t.ticketId ? (
+                  <button className="btn sm ghost" onClick={() => handleStartReview(t.ticketId)}>Start Review</button>
+                ) : (
+                  <div style={{ background: 'rgba(0,0,0,0.02)', padding: '15px', borderRadius: '4px' }}>
+                    <p style={{ margin: '0 0 10px 0' }}><strong>RM Response:</strong></p>
+                    <textarea 
+                      style={{ width: '100%', height: '80px', marginBottom: '10px', padding: '10px', borderRadius: '4px', border: '1px solid var(--border)' }}
+                      placeholder="Type your resolution here..."
+                      value={rmResponse}
+                      onChange={(e) => setRmResponse(e.target.value)}
+                    />
+                    <button className="btn sm" onClick={() => handleResolveTicket(t.ticketId)}>Resolve Ticket</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </>

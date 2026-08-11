@@ -9,6 +9,7 @@ import google.generativeai as genai
 
 load_dotenv()
 api_key = os.getenv("LLM_API_KEY")
+confidence_threshold = float(os.getenv("RAG_CONFIDENCE_THRESHOLD", "0.6"))
 
 if not api_key:
     print("WARNING: LLM_API_KEY not set")
@@ -66,7 +67,7 @@ def ask_faq():
         relevant_docs = []
         if results['distances'] and results['distances'][0]:
             for i, distance in enumerate(results['distances'][0]):
-                if distance < 0.6: # distance threshold
+                if distance < confidence_threshold: # configurable threshold
                     relevant_docs.append({
                         "content": results['documents'][0][i],
                         "title": results['metadatas'][0][i]['title']
@@ -84,7 +85,8 @@ def ask_faq():
                 "success": True,
                 "data": {
                     "answer": "I couldn't find this information in the available product FAQs.",
-                    "sources": []
+                    "sources": [],
+                    "lowConfidence": True
                 }
             })
             
