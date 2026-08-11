@@ -13,6 +13,7 @@ import Register from './pages/Register';
 import Settings from './pages/Settings';
 import CustomerList from './pages/CustomerList';
 import CustomerDetails from './pages/CustomerDetails';
+import RMTickets from './pages/RMTickets';
 
 const ProtectedRoute = ({ children, roleRequired }) => {
   const role = localStorage.getItem('role');
@@ -36,6 +37,7 @@ function App() {
 
         {/* RM Routes */}
         <Route path="/rm/dashboard" element={<ProtectedRoute roleRequired="rm"><RMDashboard /></ProtectedRoute>} />
+        <Route path="/rm/tickets" element={<ProtectedRoute roleRequired="rm"><RMTickets /></ProtectedRoute>} />
         <Route path="/rm/customers" element={<ProtectedRoute roleRequired="rm"><CustomerList /></ProtectedRoute>} />
         <Route path="/rm/customer/:customerId" element={<ProtectedRoute roleRequired="rm"><CustomerDetails /></ProtectedRoute>} />
         <Route path="/rm/collections" element={<ProtectedRoute roleRequired="rm"><Collections /></ProtectedRoute>} />

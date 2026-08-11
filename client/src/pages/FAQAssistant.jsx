@@ -10,9 +10,12 @@ const FAQAssistant = () => {
 
   const [tickets, setTickets] = useState([]);
 
+  const customerId = localStorage.getItem('customerId');
+
   const loadTickets = async () => {
+    if (!customerId) return;
     try {
-      const res = await fetch('http://localhost:5000/api/tickets/customer/C001');
+      const res = await fetch(`http://localhost:5000/api/tickets/customer/${customerId}`);
       const data = await res.json();
       if (data.success) setTickets(data.tickets);
     } catch(e) {}
@@ -20,7 +23,7 @@ const FAQAssistant = () => {
 
   useEffect(() => {
     loadTickets();
-  }, []);
+  }, [customerId]);
 
   useEffect(() => {
     if (chatlogRef.current) {
@@ -75,7 +78,7 @@ const FAQAssistant = () => {
       const res = await fetch('http://localhost:5000/api/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId: 'C001', question })
+        body: JSON.stringify({ customerId, question })
       });
       const data = await res.json();
       

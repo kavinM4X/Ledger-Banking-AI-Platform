@@ -1,4 +1,5 @@
 const Ticket = require('../models/Ticket');
+const Customer = require('../models/Customer');
 
 exports.createTicket = async (req, res) => {
   try {
@@ -48,8 +49,20 @@ exports.getCustomerTickets = async (req, res) => {
 
 exports.getAllTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find().sort({ createdAt: -1 });
-    res.json({ success: true, tickets });
+    const tickets = await Ticket.find().sort({ createdAt: -1 }).lean();
+    
+    const customers = await Customer.find({}, 'customer_id account_title').lean();
+    const customerMap = {};
+    customers.forEach(c => {
+      customerMap[c.customer_id] = c.account_title.split(' - ')[0]; // Use just the name
+    });
+
+    const enrichedTickets = tickets.map(t => ({
+      ...t,
+      customerName: customerMap[t.customerId] || 'Unknown Customer'
+    }));
+
+    res.json({ success: true, tickets: enrichedTickets });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Database error' });
   }

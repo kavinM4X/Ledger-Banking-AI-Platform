@@ -15,6 +15,7 @@ const Shell = ({ role, children }) => {
       ]
     : [
         { path: '/rm/dashboard', ic: '🏠', label: 'Morning Brief' },
+        { path: '/rm/tickets', ic: '🎫', label: 'Tickets' },
         { path: '/rm/customers', ic: '👥', label: 'Customers' },
         { path: '/rm/collections', ic: '📞', label: 'Collections' },
         { path: '/rm/settings', ic: '⚙️', label: 'Settings' },
