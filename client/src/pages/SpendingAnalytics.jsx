@@ -106,9 +106,9 @@ const SpendingAnalytics = () => {
           briefText.error ? (
             <p style={{ color: 'var(--red)' }}>⚠️ {briefText.error}</p>
           ) : (
-            <div>
-              <p style={{ fontWeight: '500', marginBottom: '4px' }}>{briefText.greeting}</p>
-              <p>{briefText.spending_analysis}</p>
+            <div style={{ whiteSpace: 'pre-wrap' }}>
+              <p style={{ fontWeight: '500', marginBottom: '16px' }}>{briefText.greeting}</p>
+              <p style={{ marginBottom: '16px' }}>{briefText.spending_analysis}</p>
               {briefText.anomaly_warning && (
                 <p style={{ color: 'var(--red)', marginTop: '8px', fontSize: '0.9em' }}>
                   ⚠️ {briefText.anomaly_warning}

@@ -78,24 +78,41 @@ DATA CONTEXT
 You will be provided with backend-generated analytics including total spending, transaction count, average transaction, category breakdown, highest spending category, and anomalies. Do NOT calculate the analytics yourself. The backend is the source of truth.
 
 TASK
-Explain the backend-generated analytics to the customer in a clear, professional, and analytical manner.
+Write a SHORT, SIMPLE, PROFESSIONAL, and EASY TO SCAN monthly spend brief. The complete brief should be approximately 100-160 words. Do not create long paragraphs. Use clear sections and concise bullet points.
 
-CONTENT REQUIREMENTS
-1. greeting: Generate a meaningful summary (2-4 sentences) explaining overall spending behavior, major spending category, transaction activity, important spending pattern, and anomaly presence when relevant.
-2. spending_analysis: Generate 3-5 useful key insights (e.g. dominant category, spending concentration). Each insight must contain a specific observation. ALSO generate 2-4 practical recommendations based only on the analytics. Combine these naturally.
-3. anomaly_warning: For each detected anomaly, explain what was unusual, amount/category, why it was flagged, and why it may require review. Do NOT claim fraud unless explicitly provided. If no anomaly exists, output exactly: "No significant spending anomalies were detected for this period."
-
-GROUNDING RULES
-The LLM must never calculate totals, percentages, or detect anomalies itself. Do not change backend values, invent transaction information, or invent categories. Use ONLY the supplied analytics context. Do not invent names, amounts, dates, or policies.
-
-OUTPUT FORMAT
+CONTENT REQUIREMENTS & OUTPUT FORMAT
 Output MUST be strictly valid JSON matching this schema:
 {
   "greeting": "string",
   "spending_analysis": "string",
   "anomaly_warning": "string"
 }
-Do not use markdown formatting like \`\`\`json.`;
+
+The fields MUST be populated EXACTLY as follows (including emojis and formatting):
+
+1. "greeting" MUST contain:
+📊 Summary
+• Total spending: [amount]
+• Transaction count: [count]
+• Average transaction: [amount]
+• Highest spending category: [category]
+
+2. "spending_analysis" MUST contain:
+💡 Key Insights
+• [Insight 1]
+• [Insight 2]
+• [Insight 3 (optional)]
+
+✅ Recommendations
+• [Action 1]
+• [Action 2]
+• [Action 3 (optional)]
+
+3. "anomaly_warning" MUST contain:
+[One concise statement explaining detected anomalies. If none exist, output exactly: "No significant spending anomalies were detected."]
+
+GROUNDING RULES
+Use ONLY the supplied analytics context. Do not invent names, amounts, dates, policies, or financial information. Do not repeat statistics unnecessarily. Do not use markdown formatting like \`\`\`json.`;
 
   const userPrompt = `Context:\n${JSON.stringify(context, null, 2)}`;
   
