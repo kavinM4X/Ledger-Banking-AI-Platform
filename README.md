@@ -1,7 +1,37 @@
 # Ledger Banking AI Platform
 
+## Project Overview
+The Ledger Banking AI Platform is an intelligent banking interface designed to assist both Customers and Relationship Managers (RMs). It leverages Google's Gemini LLMs to summarize spend analytics, triage customer tickets, dynamically generate collection scripts, and answer banking FAQs using Retrieval-Augmented Generation (RAG).
+
 ## Problem Statement
 Banking professionals waste significant time manually synthesizing customer data, transaction histories, and loan statuses to prepare for client interactions. Furthermore, customers struggle to find accurate product information in dense FAQs, leading to unnecessary support tickets. When tickets are needed, there is often no intelligent triage to separate trivial questions from genuine account issues. This platform aims to solve this by introducing an AI-first approach where data is actively analyzed and synthesized into actionable insights for both Relationship Managers (RMs) and Customers.
+
+## Modules & Live URLs
+The project is split into three core modules deployed in the cloud:
+
+- **Frontend (React / Vite)**
+  - Client URL: `https://ledger-banking-ai-platform-bntx.vercel.app`
+  - *(Note: Please update this URL if your Vercel domain is different)*
+  
+- **Backend (Node.js / Express)**
+  - Server URL: `https://ledger-banking-ai-platform-backend.onrender.com`
+  - Handles authentication, MongoDB operations, and general AI generation (F1, F2, F4).
+
+- **Python RAG Service (Flask)**
+  - Python-RAG URL: `https://ledger-banking-ai-platform.onrender.com`
+  - Specialized microservice handling ChromaDB semantic search and RAG for the FAQ Chatbot (F3).
+
+## Final Project Architecture
+```mermaid
+graph TD
+    User([End User]) -->|Interacts with UI| Frontend(Frontend: Vercel React App)
+    Frontend -->|REST API| NodeBackend(Node.js Backend: Render)
+    NodeBackend -->|CRUD Operations| MongoDB[(MongoDB Atlas)]
+    NodeBackend -->|AI Generation| GeminiAPI[Google Gemini API]
+    Frontend -->|FAQ Chat POST| PythonBackend(Python RAG: Render)
+    PythonBackend -->|Vector Search| ChromaDB[(ChromaDB Vector Database)]
+    PythonBackend -->|RAG Context| GeminiAPI
+```
 
 ---
 
@@ -22,16 +52,6 @@ sequenceDiagram
     Frontend-->>User: Display Script UI
 ```
 
-**Architecture Diagram:**
-```mermaid
-graph LR
-    Frontend -->|HTTP POST| Backend(Node.js)
-    Backend -->|Mongoose| Database[(MongoDB)]
-    Backend -->|GenAI SDK| AI[Gemini 3.5 Flash]
-    AI -->|JSON| Backend
-    Backend --> Frontend
-```
-
 ---
 
 ## 2. AI Monthly Spend Brief (F2)
@@ -49,16 +69,6 @@ sequenceDiagram
     Gemini API-->>Node Backend: Return Structured Brief
     Node Backend-->>Frontend: Send Data
     Frontend-->>User: Display Formatted Brief
-```
-
-**Architecture Diagram:**
-```mermaid
-graph LR
-    Frontend -->|HTTP GET| Backend(Node.js)
-    Backend -->|Aggregation| Database[(MongoDB)]
-    Backend -->|Prompt| AI[Gemini 3.5 Flash]
-    AI -->|Text| Backend
-    Backend --> Frontend
 ```
 
 ---
@@ -85,18 +95,6 @@ graph TD
     I -->|No| C
 ```
 
-**Architecture Diagram:**
-```mermaid
-graph LR
-    Frontend -->|HTTP POST| Microservice(Python/Flask)
-    Microservice -->|Embeddings| API[Gemini API]
-    Microservice -->|Semantic Search| VectorDB[(ChromaDB)]
-    VectorDB --> Microservice
-    Microservice -->|Context| API
-    API --> Microservice
-    Microservice --> Frontend
-```
-
 ---
 
 ## 4. RM Morning Brief Dashboard (F4)
@@ -114,14 +112,4 @@ sequenceDiagram
     Node Backend->>Gemini API: Request Synthesis
     Gemini API-->>Node Backend: Return Prioritized Brief
     Node Backend-->>Frontend: Display Dashboard
-```
-
-**Architecture Diagram:**
-```mermaid
-graph LR
-    Frontend --> Backend(Node.js)
-    Backend -->|Fetch All Entities| Database[(MongoDB)]
-    Backend -->|Deduplicated Data| AI[Gemini 3.5 Flash]
-    AI --> Backend
-    Backend --> Frontend
 ```
