@@ -6,29 +6,10 @@ const csv = require('csv-parser');
 const Customer = require('../models/Customer');
 const Loan = require('../models/Loan');
 const Transaction = require('../models/Transaction');
-const FAQ = require('../models/FAQ');
-const { generateEmbedding } = require('../services/embeddingService');
-const { addFaqDocuments } = require('../services/chromaService');
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/collectionsdb';
 
-// Hardcoded FAQs from HTML mockup for F3 RAG ingestion
-const FAQS = [
-  {title:"Personal Loan Documents", keys:["loan","document","documents","apply","personal"],
-   body:"To apply for a personal loan, customers need identity proof (Aadhaar or PAN), address proof (utility bill or passport), and income proof — the latest 3 months' salary slips for salaried applicants or ITR for self-employed applicants."},
-  {title:"Loan Prepayment & Foreclosure", keys:["prepay","foreclosure","close","early","prepayment"],
-   body:"Loans can be foreclosed any time after 6 EMIs. A prepayment charge of 2% on the outstanding principal applies for fixed-rate loans; floating-rate personal loans carry no prepayment penalty."},
-  {title:"Credit Card Eligibility", keys:["credit","card","eligibility","apply","income"],
-   body:"Credit card eligibility requires a minimum monthly income of ₹25,000, an existing relationship of 6+ months, and a credit score above 700. Pre-approved offers are available for salary account holders."},
-  {title:"KYC Update Process", keys:["kyc","update","verification","documents","re-kyc"],
-   body:"KYC can be updated via the mobile app under Profile > KYC Update, by uploading a photo ID and address proof, or by visiting any branch with original documents for in-person verification."},
-  {title:"Fixed Deposit Interest Rates", keys:["fd","fixed","deposit","interest","rate"],
-   body:"Fixed deposits currently offer 6.5% p.a. for tenures of 1–3 years and 7.1% p.a. for senior citizens on the same tenure, with premature withdrawal subject to a 1% rate reduction."},
-  {title:"Loan Overdue Penalty", keys:["overdue","penalty","late","fee","missed"],
-   body:"A late payment fee of 2% on the overdue EMI amount is charged after a 3-day grace period, along with additional interest accrual on the outstanding balance until payment is received."},
-  {title:"Account Statement Download", keys:["statement","download","passbook","history"],
-   body:"Account statements can be downloaded as PDF or CSV from the app under Accounts > Statements, for any date range up to the last 3 years, and are also emailed monthly by default."}
-];
+
 
 function mapCategory(narrative, txnType) {
   const text = (narrative || '').toUpperCase();
@@ -126,29 +107,6 @@ async function seed() {
     await Transaction.insertMany(txnsToInsert);
     console.log(`Seeded ${txnsToInsert.length} Transactions`);
 
-    // Seed FAQs (F3 Ingestion Pipeline)
-    console.log('Generating embeddings for FAQs...');
-    const createdFaqs = [];
-    for (const faq of FAQS) {
-      const textToEmbed = `${faq.title} - ${faq.body}`;
-      const embedding = await generateEmbedding(textToEmbed);
-      const created = await FAQ.create({
-        title: faq.title,
-        keys: faq.keys,
-        body: faq.body,
-        embedding: embedding
-      });
-      createdFaqs.push(created);
-    }
-    console.log(`Seeded ${FAQS.length} FAQs to MongoDB.`);
-    
-    // Ingest into ChromaDB
-    try {
-      await addFaqDocuments(createdFaqs);
-      console.log(`Successfully ingested FAQs into ChromaDB.`);
-    } catch (chromaErr) {
-      console.error(`Failed to ingest FAQs into ChromaDB. Is it running?`, chromaErr.message);
-    }
 
     console.log('\nSeed process completed successfully.');
     process.exit(0);

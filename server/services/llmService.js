@@ -141,67 +141,7 @@ Use ONLY the supplied analytics context. Do not invent names, amounts, dates, po
   }
 }
 
-// F3: FAQ Bot Answer (RAG)
-async function generateFAQAnswer(question, context) {
-  const systemPrompt = `You are a banking product FAQ assistant.
 
-Answer the user's question using ONLY the supplied FAQ context.
-
-Rules:
-- Do not use general knowledge.
-- Do not invent information.
-- Do not infer unsupported banking policies.
-- Do not change numbers, rates, limits, dates, or conditions.
-- If the answer is not contained in the retrieved context, state that the information is unavailable.
-- Keep the answer concise.
-- Do not expose internal reasoning.
-- Return only valid JSON matching this schema:
-{
-  "answer": "string",
-  "sources": [
-    {
-      "title": "string"
-    }
-  ]
-}
-
-RETRIEVED FAQ CONTEXT:
-${context}`;
-  
-  try {
-    const textResponse = await callGeminiAPI(systemPrompt, question, "application/json");
-    
-    let parsed;
-    try {
-      let cleanText = textResponse.replace(/^```json\n?/i, '').replace(/```$/i, '').trim();
-      const match = cleanText.match(/\{[\s\S]*\}/);
-      if (match) cleanText = match[0];
-      parsed = JSON.parse(cleanText);
-    } catch (parseErr) {
-      console.error("JSON Parse Error. Raw response was:", textResponse);
-      throw new Error("Unable to generate a valid FAQ response.");
-    }
-    
-    // Validate output
-    if (!parsed || typeof parsed.answer !== 'string' || !Array.isArray(parsed.sources)) {
-      throw new Error("Unable to generate a valid FAQ response.");
-    }
-    
-    for (const src of parsed.sources) {
-      if (typeof src.title !== 'string') {
-        throw new Error("Unable to generate a valid FAQ response.");
-      }
-    }
-    
-    return parsed;
-  } catch (error) {
-    if (error.message === "Unable to generate a valid FAQ response.") {
-      throw error;
-    }
-    console.error("FAQ Bot Error:", error.message);
-    throw new Error("Unable to generate a valid FAQ response.");
-  }
-}
 
 // F4: RM Morning Brief
 async function generateMorningBrief(customers) {
@@ -260,6 +200,6 @@ Use ONLY the supplied context. The LLM MUST NOT select additional customers, reo
 module.exports = { 
   generateCallScript,
   generateSpendBrief,
-  generateFAQAnswer,
+
   generateMorningBrief
 };

@@ -3,7 +3,6 @@ const router = express.Router();
 const { 
   getCustomerAndLoan, generateScript,
   getTransactions, addTransaction, getSpendBrief,
-  askFAQ,
   getRMDashboard, getMorningBrief
 } = require('../controllers/mainController');
 const {
@@ -19,8 +18,6 @@ router.get('/transactions/:customerId', getTransactions);
 router.post('/transactions', addTransaction);
 router.post('/analytics/brief', getSpendBrief);
 
-// F3
-router.post('/ai/faq', askFAQ);
 
 // F4
 router.get('/dashboard/rm', getRMDashboard);

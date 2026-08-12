@@ -1,11 +1,7 @@
 const Customer = require('../models/Customer');
 const Loan = require('../models/Loan');
 const Transaction = require('../models/Transaction');
-const FAQ = require('../models/FAQ');
-const { generateCallScript, generateSpendBrief, generateFAQAnswer, generateMorningBrief } = require('../services/llmService');
-const { generateEmbedding } = require('../services/embeddingService');
-const { searchFAQ } = require('../services/chromaService');
-
+const { generateCallScript, generateSpendBrief, generateMorningBrief } = require('../services/llmService');
 // Utility to calculate priority and issues (simulate F4 logic)
 function enrichCustomerWithPriority(c, loans) {
   let overdueDays = 0;
@@ -230,67 +226,6 @@ const getSpendBrief = async (req, res) => {
   }
 };
 
-// F3: FAQ Bot (ChromaDB RAG)
-const askFAQ = async (req, res) => {
-  try {
-    const { question } = req.body;
-    if (!question) return res.status(400).json({ success: false, message: 'Question required' });
-
-    // 1. Generate query embedding
-    let queryEmbedding;
-    try {
-      queryEmbedding = await generateEmbedding(question);
-    } catch (e) {
-      console.error("Embedding generation failed:", e);
-      return res.status(503).json({ success: false, error: 'Embedding service unavailable.' });
-    }
-
-    // 2. Vector Search in ChromaDB
-    let retrievedDocs = [];
-    try {
-      retrievedDocs = await searchFAQ(queryEmbedding, 3);
-    } catch (err) {
-      return res.status(503).json({ success: false, error: 'FAQ vector search is currently unavailable.' });
-    }
-
-    // Filter by relevance if needed (distance threshold)
-    // ChromaDB cosine distance usually ranges from 0 to 2 (0 being perfect match). Let's use 0.5 as threshold
-    const relevantDocs = retrievedDocs.filter(d => d.distance < 0.6);
-
-    // 3. Handle low-quality or empty retrieval
-    if (relevantDocs.length === 0) {
-      return res.json({ 
-        success: true, 
-        data: { 
-          answer: "I couldn't find this information in the available product FAQs.", 
-          sources: [] 
-        } 
-      });
-    }
-
-    // 4. Build RAG Context
-    const sources = relevantDocs.map(d => ({ title: d.metadata.title }));
-    const context = relevantDocs.map(d => `${d.metadata.title}: ${d.content}`).join("\n\n");
-
-    // 5. Pass to LLM RAG
-    const answerData = await generateFAQAnswer(question, context);
-    
-    // Return structured response to React
-    res.json({ 
-      success: true, 
-      data: { 
-        answer: answerData.answer, 
-        sources: answerData.sources 
-      } 
-    });
-  } catch (error) {
-    if (error.message === "Unable to generate a valid FAQ response.") {
-      return res.status(500).json({ success: false, error: error.message });
-    }
-    console.error("FAQ Error:", error);
-    res.status(500).json({ success: false, error: 'An unexpected error occurred.' });
-  }
-};
 
 // F4: RM Dashboard
 const getRMDashboard = async (req, res) => {
@@ -350,7 +285,6 @@ module.exports = {
   getTransactions,
   addTransaction,
   getSpendBrief,
-  askFAQ,
   getRMDashboard,
   getMorningBrief
 };
