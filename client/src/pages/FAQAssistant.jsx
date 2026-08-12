@@ -63,10 +63,10 @@ const FAQAssistant = () => {
           }]);
         }
       } else {
-        setChat(prev => [...prev, { who: 'bot', text: 'Sorry, I am unable to answer right now.', sources: [] }]);
+        setChat(prev => [...prev, { who: 'bot', text: 'Sorry, I am unable to answer right now. Please try again.', sources: [] }]);
       }
     } catch (e) {
-      setChat(prev => [...prev, { who: 'bot', text: 'Error connecting to AI service.', src: null }]);
+      setChat(prev => [...prev, { who: 'bot', text: 'Sorry, I am unable to answer right now. Please try again.', src: null }]);
     }
     
     setBusy(false);
@@ -102,6 +102,10 @@ const FAQAssistant = () => {
     setChat(prev => {
       const newChat = [...prev];
       newChat[msgIndex].isFallback = false;
+      newChat.push({ 
+        who: 'bot', 
+        text: 'No problem. You can continue asking me about our banking products and services.' 
+      });
       return newChat;
     });
   };
