@@ -1,4 +1,10 @@
 import os
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
 import json
 import re
 from flask import Flask, request, jsonify
@@ -20,6 +26,10 @@ model = genai.GenerativeModel('gemini-3.5-flash')
 
 app = Flask(__name__)
 CORS(app)
+
+@app.route('/', methods=['GET'])
+def home():
+    return "Ledger Banking AI Platform RAG API is running!"
 
 # Initialize ChromaDB
 client = chromadb.PersistentClient(path="./chroma_data")

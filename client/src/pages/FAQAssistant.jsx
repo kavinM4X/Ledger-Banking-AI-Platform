@@ -39,7 +39,7 @@ const FAQAssistant = () => {
     setInput('');
 
     try {
-      const res = await fetch(`http://localhost:5001/api/ai/faq`, {
+      const res = await fetch(`https://ledger-banking-ai-platform.onrender.com/api/ai/faq`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question })
