@@ -22,7 +22,7 @@ const Settings = () => {
     setChanging(true);
     setPasswordMsg({ text: '', type: '' });
     try {
-      const res = await fetch('http://localhost:5000/api/auth/password', {
+      const res = await fetch('https://ledger-banking-ai-platform-backend.onrender.com/api/auth/password', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: 'rm.kavin', oldPassword, newPassword })
