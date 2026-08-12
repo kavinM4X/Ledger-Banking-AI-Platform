@@ -53,8 +53,9 @@ def generate_json_from_gemini(prompt, retries=1):
                 generation_config=genai.GenerationConfig(response_mime_type="application/json")
             )
             raw_text = response.text.strip()
-            raw_text = re.sub(r'^```json\n?', '', raw_text, flags=re.IGNORECASE)
-            raw_text = re.sub(r'```$', '', raw_text).strip()
+            match = re.search(r'\{[\s\S]*\}', raw_text)
+            if match:
+                raw_text = match.group(0)
             return json.loads(raw_text)
         except json.JSONDecodeError as e:
             if attempt < retries:

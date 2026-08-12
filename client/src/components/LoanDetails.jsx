@@ -75,3 +75,4 @@ const LoanDetails = ({ customer, loans, selectedLoanId, onSelectLoan, onGenerate
 };
 
 export default LoanDetails;
+

@@ -9,7 +9,7 @@ const Collections = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/dashboard/rm`)
+    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/dashboard/rm`)
       .then(res => res.json())
       .then(resData => {
         if (resData.success) {
@@ -147,3 +147,4 @@ const Collections = () => {
 };
 
 export default Collections;
+

@@ -8,7 +8,7 @@ const RMTickets = () => {
   const navigate = useNavigate();
 
   const loadTickets = () => {
-    fetch(`http://localhost:5000/api/tickets`)
+    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/tickets`)
       .then(res => res.json())
       .then(resData => {
         if (resData.success) setTickets(resData.tickets);
@@ -21,7 +21,7 @@ const RMTickets = () => {
 
   const handleStartReview = async (ticketId) => {
     try {
-      await fetch(`http://localhost:5000/api/tickets/${ticketId}/status`, {
+      await fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/tickets/${ticketId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'IN_REVIEW' })
@@ -34,7 +34,7 @@ const RMTickets = () => {
   const handleResolveTicket = async (ticketId) => {
     if (!rmResponse) return;
     try {
-      await fetch(`http://localhost:5000/api/tickets/${ticketId}/resolve`, {
+      await fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/tickets/${ticketId}/resolve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rmResponse })
@@ -114,3 +114,4 @@ const RMTickets = () => {
 };
 
 export default RMTickets;
+

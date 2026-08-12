@@ -15,7 +15,7 @@ const FAQAssistant = () => {
   const loadTickets = async () => {
     if (!customerId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/tickets/customer/${customerId}`);
+      const res = await fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/tickets/customer/${customerId}`);
       const data = await res.json();
       if (data.success) setTickets(data.tickets);
     } catch(e) {}
@@ -75,7 +75,7 @@ const FAQAssistant = () => {
   const handleRaiseTicket = async (question, msgIndex) => {
     setBusy(true);
     try {
-      const res = await fetch('http://localhost:5000/api/tickets', {
+      const res = await fetch('https://ledger-banking-ai-platform-1.onrender.com/api/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId, question })
@@ -201,3 +201,4 @@ const FAQAssistant = () => {
 };
 
 export default FAQAssistant;
+

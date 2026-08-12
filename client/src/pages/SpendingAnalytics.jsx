@@ -10,7 +10,7 @@ const SpendingAnalytics = () => {
   const customerId = localStorage.getItem('customerId');
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/transactions/${customerId}`)
+    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/transactions/${customerId}`)
       .then(res => res.json())
       .then(resData => {
         if (resData.success) {
@@ -23,7 +23,7 @@ const SpendingAnalytics = () => {
     if (!data) return;
     setBriefLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/analytics/brief`, {
+      const res = await fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/analytics/brief`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId })
@@ -158,3 +158,4 @@ const SpendingAnalytics = () => {
 };
 
 export default SpendingAnalytics;
+

@@ -61,3 +61,4 @@ const CallScript = ({ scriptData, onRegenerate, generateLoading }) => {
 };
 
 export default CallScript;
+

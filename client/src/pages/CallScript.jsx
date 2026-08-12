@@ -14,7 +14,7 @@ const CallScript = () => {
 
   useEffect(() => {
     // Fetch customer and loan
-    fetch(`http://localhost:5000/api/customer/${customerId}`)
+    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/customer/${customerId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -34,7 +34,7 @@ const CallScript = () => {
     if (force) setScriptData(null);
     
     try {
-      const res = await fetch(`http://localhost:5000/api/collections/generate`, {
+      const res = await fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/collections/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId: cust.customer_id, loanId: ln.loan_id })
@@ -146,3 +146,4 @@ const CallScript = () => {
 };
 
 export default CallScript;
+

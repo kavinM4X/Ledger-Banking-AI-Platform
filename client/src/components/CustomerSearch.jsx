@@ -34,3 +34,4 @@ const CustomerSearch = ({ onSearch, loading }) => {
 };
 
 export default CustomerSearch;
+
