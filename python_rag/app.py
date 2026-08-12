@@ -31,8 +31,9 @@ CORS(app)
 def home():
     return "Ledger Banking AI Platform RAG API is running!"
 
-# Initialize ChromaDB
-client = chromadb.PersistentClient(path="./chroma_data")
+# Initialize ChromaDB (Disable telemetry to prevent cloud network hangs)
+from chromadb.config import Settings
+client = chromadb.PersistentClient(path="./chroma_data", settings=Settings(anonymized_telemetry=False))
 
 class CustomGeminiEmbeddingFunction(chromadb.EmbeddingFunction):
     def __init__(self, api_key: str):
@@ -46,7 +47,7 @@ class CustomGeminiEmbeddingFunction(chromadb.EmbeddingFunction):
                 "model": "models/gemini-embedding-2",
                 "content": {"parts": [{"text": text}]}
             }
-            res = requests.post(url, json=payload).json()
+            res = requests.post(url, json=payload, timeout=15).json()
             embeddings.append(res['embedding']['values'])
         return embeddings
 
@@ -123,16 +124,20 @@ def deterministic_intent(question):
 
 @app.route('/api/ai/faq', methods=['POST'])
 def ask_faq():
+    print("DEBUG: Received FAQ POST request.")
     data = request.json
     question = data.get('question')
+    print(f"DEBUG: Question: {question}")
     if not question:
         return jsonify({"success": False, "error": "Question required"}), 400
         
     # 1. Deterministic Intent Classification
     intent = deterministic_intent(question)
+    print(f"DEBUG: Deterministic intent result: {intent}")
     
     # 2. LLM Intent Classification (Only if deterministic fails)
     if not intent:
+        print("DEBUG: Calling Gemini for LLM intent classification...")
         intent_prompt = f"""You are an intent classifier for a banking assistant.
 Classify the user's message into exactly one of these intents:
 1. GENERAL_CONVERSATION: Simple greetings (Hi, Hello) or general small talk (How are you, Who are you, Thank you).
@@ -222,16 +227,20 @@ User Message: {question}"""
 
     elif intent == "FAQ_QUERY":
         try:
+            print("DEBUG: Getting ChromaDB collection...")
             collection = get_collection()
+            print("DEBUG: ChromaDB collection retrieved successfully.")
         except Exception as e:
             print("ChromaDB Error:", str(e))
             return jsonify({"success": False, "error": "Sorry, I am unable to answer right now. Please try again."}), 503
             
         try:
+            print("DEBUG: Querying ChromaDB for relevant docs...")
             results = collection.query(
                 query_texts=[question],
                 n_results=3
             )
+            print("DEBUG: Query complete.")
             
             relevant_docs = []
             if results['distances'] and results['distances'][0]:
@@ -285,7 +294,9 @@ Rules:
 RETRIEVED FAQ CONTEXT:
 {context}
 """
+            print("DEBUG: Sending context to Gemini for answer generation...")
             answer_data = generate_json_from_gemini(system_prompt + "\n\nUser Question: " + question)
+            print("DEBUG: Answer generation complete.")
             
             # Post-check if the LLM admitted it couldn't find the answer
             if answer_data.get("answer", "") == "I couldn't find this information in the available product FAQs.":
