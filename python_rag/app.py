@@ -21,8 +21,8 @@ model = genai.GenerativeModel('gemini-3.5-flash')
 app = Flask(__name__)
 CORS(app)
 
-# Initialize ChromaDB
-client = chromadb.PersistentClient(path="./chroma_data")
+# Client will be initialized lazily inside get_collection
+client = None
 
 class CustomGeminiEmbeddingFunction(chromadb.EmbeddingFunction):
     def __init__(self, api_key: str):
@@ -43,6 +43,9 @@ class CustomGeminiEmbeddingFunction(chromadb.EmbeddingFunction):
 custom_ef = CustomGeminiEmbeddingFunction(api_key=api_key)
 
 def get_collection():
+    global client
+    if client is None:
+        client = chromadb.PersistentClient(path="./chroma_data")
     return client.get_collection(name="banking_faq", embedding_function=custom_ef)
 
 def generate_json_from_gemini(prompt, retries=1):
