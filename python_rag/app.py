@@ -15,7 +15,7 @@ confidence_threshold = float(os.getenv("RAG_CONFIDENCE_THRESHOLD", "0.6"))
 if not api_key:
     print("WARNING: LLM_API_KEY not set")
 
-genai.configure(api_key=api_key)
+genai.configure(api_key=api_key, transport='rest')
 model = genai.GenerativeModel('gemini-3.5-flash')
 
 app = Flask(__name__)
