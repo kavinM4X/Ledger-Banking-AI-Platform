@@ -45,22 +45,29 @@ custom_ef = CustomGeminiEmbeddingFunction(api_key=api_key)
 def get_collection():
     return client.get_collection(name="banking_faq", embedding_function=custom_ef)
 
-def generate_json_from_gemini(prompt):
-    try:
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(response_mime_type="application/json")
-        )
-        raw_text = response.text.strip()
-        raw_text = re.sub(r'^```json\n?', '', raw_text, flags=re.IGNORECASE)
-        raw_text = re.sub(r'```$', '', raw_text).strip()
-        return json.loads(raw_text)
-    except Exception as e:
-        error_msg = str(e)
-        print("Gemini API Error:", error_msg)
-        if "429" in error_msg or "ResourceExhausted" in error_msg or "quota" in error_msg.lower():
-            raise Exception("429")
-        raise Exception("500")
+def generate_json_from_gemini(prompt, retries=1):
+    for attempt in range(retries + 1):
+        try:
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(response_mime_type="application/json")
+            )
+            raw_text = response.text.strip()
+            raw_text = re.sub(r'^```json\n?', '', raw_text, flags=re.IGNORECASE)
+            raw_text = re.sub(r'```$', '', raw_text).strip()
+            return json.loads(raw_text)
+        except json.JSONDecodeError as e:
+            if attempt < retries:
+                print(f"JSON Parse Error. Retrying... (Attempt {attempt+1})")
+                continue
+            print("Gemini API Error:", str(e))
+            raise Exception("500")
+        except Exception as e:
+            error_msg = str(e)
+            print("Gemini API Error:", error_msg)
+            if "429" in error_msg or "ResourceExhausted" in error_msg or "quota" in error_msg.lower():
+                raise Exception("429")
+            raise Exception("500")
 
 def generate_text_from_gemini(prompt):
     try:

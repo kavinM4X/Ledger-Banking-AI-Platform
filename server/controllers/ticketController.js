@@ -3,7 +3,10 @@ const Customer = require('../models/Customer');
 
 exports.createTicket = async (req, res) => {
   try {
-    const { customerId = 'C001', question } = req.body;
+    let { customerId, question } = req.body;
+    
+    // Default to 'C001' if null or undefined
+    if (!customerId) customerId = 'C001';
     
     // Generate a simple unique ID
     const ticketId = `TKT-${Math.floor(10000 + Math.random() * 90000)}`;
