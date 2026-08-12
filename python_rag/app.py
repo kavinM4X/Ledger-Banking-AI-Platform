@@ -36,7 +36,7 @@ class CustomGeminiEmbeddingFunction(chromadb.EmbeddingFunction):
                 "model": "models/gemini-embedding-2",
                 "content": {"parts": [{"text": text}]}
             }
-            res = requests.post(url, json=payload).json()
+            res = requests.post(url, json=payload, timeout=10).json()
             embeddings.append(res['embedding']['values'])
         return embeddings
 
@@ -138,7 +138,9 @@ Output strictly valid JSON:
 User Message: {question}"""
 
         try:
+            print("[DEBUG] Generating intent using LLM...")
             intent_data = generate_json_from_gemini(intent_prompt)
+            print("[DEBUG] Intent generated:", intent_data)
             intent = intent_data.get("intent")
         except Exception as e:
             if str(e) == "429":
@@ -213,16 +215,20 @@ User Message: {question}"""
 
     elif intent == "FAQ_QUERY":
         try:
+            print("[DEBUG] Accessing ChromaDB collection...")
             collection = get_collection()
+            print("[DEBUG] ChromaDB collection accessed successfully.")
         except Exception as e:
             print("ChromaDB Error:", str(e))
             return jsonify({"success": False, "error": "Sorry, I am unable to answer right now. Please try again."}), 503
             
         try:
+            print("[DEBUG] Querying ChromaDB for question:", question)
             results = collection.query(
                 query_texts=[question],
                 n_results=3
             )
+            print("[DEBUG] ChromaDB query returned successfully.")
             
             relevant_docs = []
             if results['distances'] and results['distances'][0]:
@@ -276,7 +282,9 @@ Rules:
 RETRIEVED FAQ CONTEXT:
 {context}
 """
+            print("[DEBUG] Calling Gemini to generate final RAG answer...")
             answer_data = generate_json_from_gemini(system_prompt + "\n\nUser Question: " + question)
+            print("[DEBUG] Gemini final RAG answer generated.")
             
             # Post-check if the LLM admitted it couldn't find the answer
             if answer_data.get("answer", "") == "I couldn't find this information in the available product FAQs.":
