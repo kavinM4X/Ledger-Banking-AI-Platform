@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 const Settings = () => {
   const role = localStorage.getItem('role');
   const customerId = localStorage.getItem('customerId');
-  const userId = isRM ? 'rm.kavin' : customerId; // Explicitly set user ID for password change
   const isRM = role === 'rm';
+  const userId = isRM ? 'rm.kavin' : customerId; // Explicitly set user ID for password change
   const [customer, setCustomer] = useState(null);
   
   // Password change state
