@@ -3,18 +3,49 @@ import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [role, setRole] = useState('customer'); // 'customer' or 'rm'
+  const [userId, setUserId] = useState('100100');
+  const [password, setPassword] = useState('welcome');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  // Update default userId when role changes
+  const handleRoleChange = (newRole) => {
+    setRole(newRole);
+    setUserId(newRole === 'rm' ? 'rm.kavin' : '100100');
+    setError('');
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    localStorage.setItem('role', role);
-    // Hardcoding the login ID for demo purposes based on HTML mockup
-    localStorage.setItem('customerId', '100100'); 
-    
-    if (role === 'customer') {
-      navigate('/customer/dashboard');
-    } else {
-      navigate('/rm/dashboard');
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, password })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        localStorage.setItem('role', data.user.role);
+        localStorage.setItem('customerId', data.user.userId);
+        
+        if (data.user.role === 'customer') {
+          navigate('/customer/dashboard');
+        } else {
+          navigate('/rm/dashboard');
+        }
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -24,25 +55,39 @@ const Login = () => {
         <div className="mark">Ledger</div>
         <div className="tag">Banking AI Platform</div>
         
+        {error && <div style={{ color: 'red', marginBottom: '15px', fontSize: '14px', textAlign: 'center' }}>{error}</div>}
+
         <form onSubmit={handleLogin}>
           <div className="roletoggle">
-            <button type="button" className={role === 'customer' ? 'active' : ''} onClick={() => setRole('customer')}>
+            <button type="button" className={role === 'customer' ? 'active' : ''} onClick={() => handleRoleChange('customer')}>
               Customer
             </button>
-            <button type="button" className={role === 'rm' ? 'active' : ''} onClick={() => setRole('rm')}>
+            <button type="button" className={role === 'rm' ? 'active' : ''} onClick={() => handleRoleChange('rm')}>
               Relationship Mgr
             </button>
           </div>
           
           <div className="field">
             <label>User ID</label>
-            <input type="text" defaultValue={role === 'rm' ? 'rm.kavin' : '100100'} />
+            <input 
+              type="text" 
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              required
+            />
           </div>
           <div className="field">
             <label>Password</label>
-            <input type="password" defaultValue="password" />
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
-          <button type="submit" className="btn">Sign In</button>
+          <button type="submit" className="btn" disabled={loading}>
+            {loading ? 'Signing In...' : 'Sign In'}
+          </button>
         </form>
         
         <div className="loginfoot">

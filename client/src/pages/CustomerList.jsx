@@ -9,7 +9,7 @@ const CustomerList = () => {
 
   useEffect(() => {
     // Reusing the RM dashboard endpoint to fetch all customers since it has the enriched logic
-    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/dashboard/rm`)
+    fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/dashboard/rm`)
       .then(res => res.json())
       .then(resData => {
         if (resData.success) {

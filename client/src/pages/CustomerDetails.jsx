@@ -7,7 +7,7 @@ const CustomerDetails = () => {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/customer/${customerId}`)
+    fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/customer/${customerId}`)
       .then(res => res.json())
       .then(resData => {
         if (resData.success) {

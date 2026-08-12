@@ -12,7 +12,7 @@ const RMDashboard = () => {
   const [rmResponse, setRmResponse] = useState('');
 
   const loadDashboard = () => {
-    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/dashboard/rm`)
+    fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/dashboard/rm`)
       .then(res => res.json())
       .then(resData => {
         if (resData.success) setData(resData);
@@ -20,7 +20,7 @@ const RMDashboard = () => {
   };
 
   const loadTickets = () => {
-    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/tickets`)
+    fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/tickets`)
       .then(res => res.json())
       .then(resData => {
         if (resData.success) setTickets(resData.tickets);
@@ -38,7 +38,7 @@ const RMDashboard = () => {
     if (!data || !data.top5) return;
     setBriefLoading(true);
     try {
-      const res = await fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/dashboard/rm/brief`, {
+      const res = await fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/dashboard/rm/brief`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ top5: data.top5 })

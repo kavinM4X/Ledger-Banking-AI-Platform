@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://ledger-banking-ai-platform-1.onrender.com/api/collections';
+const API_BASE_URL = 'https://ledger-banking-ai-platform-backend.onrender.com/api/collections';
 
 export const fetchCustomerAndLoans = async (customerId) => {
   const response = await axios.get(`${API_BASE_URL}/customer/${customerId}`);

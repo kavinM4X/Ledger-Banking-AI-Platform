@@ -11,7 +11,7 @@ const CustomerDashboard = () => {
   const customerId = localStorage.getItem('customerId');
 
   useEffect(() => {
-    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/customer/${customerId}`)
+    fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/customer/${customerId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -20,7 +20,7 @@ const CustomerDashboard = () => {
       });
       
     // Fetch transactions for preview
-    fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/transactions/${customerId}`)
+    fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/transactions/${customerId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.txns) {
@@ -49,7 +49,7 @@ const CustomerDashboard = () => {
     }
 
     try {
-      await fetch('https://ledger-banking-ai-platform-1.onrender.com/api/transactions', {
+      await fetch('https://ledger-banking-ai-platform-backend.onrender.com/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,11 +62,11 @@ const CustomerDashboard = () => {
       });
 
       // Refetch data to update balance and transactions
-      const res = await fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/customer/${customerId}`);
+      const res = await fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/customer/${customerId}`);
       const data = await res.json();
       if (data.success) setCustomer(data.customer);
 
-      const txnRes = await fetch(`https://ledger-banking-ai-platform-1.onrender.com/api/transactions/${customerId}`);
+      const txnRes = await fetch(`https://ledger-banking-ai-platform-backend.onrender.com/api/transactions/${customerId}`);
       if (txnRes.ok) {
         const txnData = await txnRes.json();
         if (txnData.success && txnData.txns) {
