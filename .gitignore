@@ -2,4 +2,5 @@ server/node_modules/
 node_modules/
 server/.env
 python_rag/.env
+python_rag/chroma_data/
 python_rag/venv/

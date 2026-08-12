@@ -3,5 +3,3 @@ flask-cors
 chromadb
 google-generativeai
 python-dotenv
-gunicorn
-pysqlite3-binary; sys_platform == 'linux'
